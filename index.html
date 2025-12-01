@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Habit Tracker</title>
+    <style>
+        :root {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --bg: #f5f7fb;
+            --card-bg: #ffffff;
+            --accent: #4caf50;
+            --accent-soft: #c8e6c9;
+            --border: #dde2eb;
+            --text-muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px 24px 32px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 16px;
+            font-size: 28px;
+        }
+
+        .summary-row {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .control-group input[type="text"] {
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            min-width: 240px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button.secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .summary-item {
+            min-width: 160px;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            position: relative;
+            width: 220px;
+            height: 14px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0%;
+            background: var(--accent);
+            transition: width 0.2s ease-out;
+        }
+
+        .progress-bar-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 4px;
+            text-align: center;
+        }
+
+        th.habit-col, td.habit-col {
+            text-align: left;
+            padding-left: 8px;
+            white-space: nowrap;
+            position: sticky;
+            left: 0;
+            background: var(--card-bg);
+            z-index: 2;
+        }
+
+        thead th {
+            background: #edf1fb;
+            font-weight: 500;
+        }
+
+        thead .week-header {
+            background: #e0e7ff;
+            font-weight: 600;
+        }
+
+        .habit-name {
+            font-size: 12px;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+
+        .habit-actions {
+            display: inline-flex;
+            gap: 6px;
+            margin-left: 8px;
+        }
+
+        .habit-actions button {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        @media (max-width: 900px) {
+            table {
+                font-size: 11px;
+            }
+            .summary-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="card">
+        <h1 id="monthTitle">Monat</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <input id="newHabit" type="text" placeholder="Neue Gewohnheit hinzufügen" aria-label="Neue Gewohnheit">
+                <button id="addHabitBtn">Hinzufügen</button>
+            </div>
+            <button class="secondary" id="resetBtn">Monatsdaten löschen</button>
+        </div>
+
+        <div class="summary-row">
+            <div class="summary-item">
+                <div class="summary-label">Anzahl Gewohnheiten</div>
+                <div class="summary-value" id="habitCount">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Erledigte Gewohnheiten</div>
+                <div class="summary-value" id="completedCount">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Fortschritt gesamt</div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-bar-label" id="progressText">0 %</div>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table id="habitTable">
+                <thead id="habitThead"></thead>
+                <tbody id="habitTbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const defaultHabits = [
+        "Um 05:00 aufstehen",
+        "Gym",
+        "Kein Pornokonsum",
+        "Lesen / Lernen",
+        "Budget Tracking",
+        "Projektarbeit",
+        "Kein Alkohol",
+        "Social Media Detox",
+        "Ziel-Journaling",
+        "Kaltdusche"
+    ];
+
+    const monthNames = [
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember"
+    ];
+    const weekdayShort = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const monthIndex = today.getMonth();
+    const numDays = new Date(year, monthIndex + 1, 0).getDate();
+    const storageKey = `habit-tracker-${year}-${monthIndex + 1}`;
+
+    const monthTitle = document.getElementById("monthTitle");
+    const habitCountEl = document.getElementById("habitCount");
+    const completedCountEl = document.getElementById("completedCount");
+    const progressFill = document.getElementById("progressFill");
+    const progressText = document.getElementById("progressText");
+    const theadEl = document.getElementById("habitThead");
+    const tbodyEl = document.getElementById("habitTbody");
+    const newHabitInput = document.getElementById("newHabit");
+    const addHabitBtn = document.getElementById("addHabitBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let state = {
+        habits: [...defaultHabits],
+        checks: {}
+    };
+
+    function loadState() {
+        const stored = localStorage.getItem(storageKey);
+        if (!stored) return;
+        try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed.habits) && typeof parsed.checks === "object") {
+                state = parsed;
+            }
+        } catch (e) {
+            console.warn("Konnte gespeicherte Daten nicht lesen", e);
+        }
+    }
+
+    function saveState() {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function buildTable() {
+        theadEl.innerHTML = "";
+        tbodyEl.innerHTML = "";
+
+        monthTitle.textContent = `${monthNames[monthIndex]} ${year}`;
+        habitCountEl.textContent = state.habits.length;
+
+        const headRow1 = document.createElement("tr");
+        const headRow2 = document.createElement("tr");
+
+        const emptyTh1 = document.createElement("th");
+        emptyTh1.className = "habit-col";
+        emptyTh1.rowSpan = 2;
+        emptyTh1.textContent = "Meine Gewohnheiten";
+        headRow1.appendChild(emptyTh1);
+
+        for (let day = 1; day <= numDays; day++) {
+            const thDay = document.createElement("th");
+            thDay.textContent = day;
+            headRow1.appendChild(thDay);
+
+            const thWeekday = document.createElement("th");
+            const dateObj = new Date(year, monthIndex, day);
+            thWeekday.textContent = weekdayShort[dateObj.getDay()];
+            headRow2.appendChild(thWeekday);
+        }
+
+        theadEl.appendChild(headRow1);
+        theadEl.appendChild(headRow2);
+
+        state.habits.forEach((habit, habitIndex) => {
+            const tr = document.createElement("tr");
+
+            const habitTd = document.createElement("td");
+            habitTd.className = "habit-col";
+            habitTd.innerHTML = `<span class="habit-name">${habit}</span>`;
+
+            const actions = document.createElement("span");
+            actions.className = "habit-actions";
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "secondary";
+            removeBtn.textContent = "Entfernen";
+            removeBtn.addEventListener("click", () => removeHabit(habitIndex));
+
+            actions.appendChild(removeBtn);
+            habitTd.appendChild(actions);
+            tr.appendChild(habitTd);
+
+            for (let day = 1; day <= numDays; day++) {
+                const td = document.createElement("td");
+                td.className = "checkbox-cell";
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.className = "habit-checkbox";
+                checkbox.dataset.day = String(day);
+                checkbox.dataset.habit = String(habitIndex);
+                const key = `${habitIndex}-${day}`;
+                checkbox.checked = Boolean(state.checks[key]);
+                checkbox.addEventListener("change", () => handleCheckChange(key, checkbox.checked));
+                td.appendChild(checkbox);
+                tr.appendChild(td);
+            }
+
+            tbodyEl.appendChild(tr);
+        });
+
+        recalcProgress();
+    }
+
+    function removeHabit(index) {
+        if (!state.habits[index]) return;
+        if (!confirm(`"${state.habits[index]}" wirklich entfernen?`)) return;
+
+        state.habits.splice(index, 1);
+
+        const newChecks = {};
+        Object.entries(state.checks).forEach(([key, value]) => {
+            const [habitStr, dayStr] = key.split("-");
+            const habitIdx = Number(habitStr);
+            if (habitIdx === index) return;
+            const newIdx = habitIdx > index ? habitIdx - 1 : habitIdx;
+            newChecks[`${newIdx}-${dayStr}`] = value;
+        });
+        state.checks = newChecks;
+
+        saveState();
+        buildTable();
+    }
+
+    function handleCheckChange(key, checked) {
+        if (checked) {
+            state.checks[key] = true;
+        } else {
+            delete state.checks[key];
+        }
+        saveState();
+        recalcProgress();
+    }
+
+    function addHabit() {
+        const name = newHabitInput.value.trim();
+        if (!name) return;
+        state.habits.push(name);
+        newHabitInput.value = "";
+        saveState();
+        buildTable();
+    }
+
+    function resetMonth() {
+        if (!confirm("Alle Daten für diesen Monat löschen?")) return;
+        state = { habits: [...defaultHabits], checks: {} };
+        saveState();
+        buildTable();
+    }
+
+    function recalcProgress() {
+        const checkboxes = document.querySelectorAll(".habit-checkbox");
+        let completed = 0;
+        checkboxes.forEach(cb => {
+            if (cb.checked) completed++;
+        });
+
+        const totalPossible = state.habits.length * numDays;
+        const totalPct = totalPossible ? (completed / totalPossible) * 100 : 0;
+
+        completedCountEl.textContent = completed;
+        progressFill.style.width = totalPct.toFixed(1) + "%";
+        progressText.textContent = totalPct.toFixed(0) + " %";
+
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadState();
+        buildTable();
+        addHabitBtn.addEventListener("click", addHabit);
+        newHabitInput.addEventListener("keyup", e => {
+            if (e.key === "Enter") addHabit();
+        });
+        resetBtn.addEventListener("click", resetMonth);
+    });
+</script>
+</body>
+</html>
