@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Habit Tracker</title>
+    <style>
+        :root {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --bg: #f5f7fb;
+            --card-bg: #ffffff;
+            --accent: #4caf50;
+            --accent-soft: #c8e6c9;
+            --border: #dde2eb;
+            --text-muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px 24px 32px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 16px;
+            font-size: 28px;
+        }
+
+        .summary-row {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .control-group input[type="text"] {
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            min-width: 240px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button.secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .summary-item {
+            min-width: 160px;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            position: relative;
+            width: 220px;
+            height: 14px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0%;
+            background: var(--accent);
+            transition: width 0.2s ease-out;
+        }
+
+        .progress-bar-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 4px;
+            text-align: center;
+        }
+
+        th.habit-col, td.habit-col {
+            text-align: left;
+            padding-left: 8px;
+            white-space: nowrap;
+            position: sticky;
+            left: 0;
+            background: var(--card-bg);
+            z-index: 2;
+        }
+
+        thead th {
+            background: #edf1fb;
+            font-weight: 500;
+        }
+
+        thead .week-header {
+            background: #e0e7ff;
+            font-weight: 600;
+        }
+
+        .habit-name {
+            font-size: 12px;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+
+        .footer-note {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .daily-progress-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .daily-progress-chart {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 80px;
+            padding: 8px 4px;
+            border-radius: 8px;
+            background: #f3f4f6;
+            overflow: hidden;
+        }
+
+        .day-bar {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .day-bar-fill {
+            width: 100%;
+            border-radius: 999px 999px 0 0;
+            background: var(--accent-soft);
+            height: 0%;
+            transition: height 0.2s ease-out;
+        }
+
+        .day-bar-fill.active {
+            background: var(--accent);
+        }
+
+        .day-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .day-labels span {
+            flex: 1;
+            text-align: center;
+        }
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+            gap: 16px;
+            margin-top: 8px;
+            align-items: flex-start;
+        }
+
+        .day-percent-table {
+            font-size: 11px;
+        }
+
+        .day-percent-table th,
+        .day-percent-table td {
+            padding: 2px 4px;
+        }
+
+        @media (max-width: 900px) {
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+            table {
+                font-size: 11px;
+            }
+            .summary-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="card">
+        <h1 id="monthTitle">Monat</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <input id="newHabit" type="text" placeholder="Neue Gewohnheit hinzufügen" aria-label="Neue Gewohnheit">
+                <button id="addHabitBtn">Hinzufügen</button>
+            </div>
+            <button class="secondary" id="resetBtn">Monatsdaten löschen</button>
+        </div>
+
+        <div class="summary-row">
+            <div class="summary-item">
+                <div class="summary-label">Anzahl Gewohnheiten</div>
+                <div class="summary-value" id="habitCount">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Erledigte Gewohnheiten</div>
+                <div class="summary-value" id="completedCount">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Fortschritt gesamt</div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-bar-label" id="progressText">0 %</div>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table id="habitTable">
+                <thead id="habitThead"></thead>
+                <tbody id="habitTbody"></tbody>
+            </table>
+        </div>
+
+        <div class="bottom-grid">
+            <div>
+                <div class="daily-progress-title">Täglicher Fortschritt (%)</div>
+                <div class="daily-progress-chart" id="dailyChart"></div>
+                <div class="day-labels" id="dayLabels"></div>
+                <div class="footer-note">
+                    Jeder Balken zeigt, wie viel Prozent deiner Gewohnheiten du an diesem Tag erledigt hast.
+                    Alle Daten werden lokal in deinem Browser gespeichert.
+                </div>
+            </div>
+            <div>
+                <table class="day-percent-table" id="dayPercentTable">
+                    <thead>
+                    <tr>
+                        <th>Tag</th>
+                        <th>Fortschritt %</th>
+                    </tr>
+                    </thead>
+                    <tbody id="dayPercentBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const defaultHabits = [
+        "Um 05:00 aufstehen",
+        "Gym",
+        "Kein Pornokonsum",
+        "Lesen / Lernen",
+        "Budget Tracking",
+        "Projektarbeit",
+        "Kein Alkohol",
+        "Social Media Detox",
+        "Ziel-Journaling",
+        "Kaltdusche"
+    ];
+
+    const monthNames = [
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember"
+    ];
+    const weekdayShort = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const monthIndex = today.getMonth();
+    const numDays = new Date(year, monthIndex + 1, 0).getDate();
+    const storageKey = `habit-tracker-${year}-${monthIndex + 1}`;
+
+    const monthTitle = document.getElementById("monthTitle");
+    const habitCountEl = document.getElementById("habitCount");
+    const completedCountEl = document.getElementById("completedCount");
+    const progressFill = document.getElementById("progressFill");
+    const progressText = document.getElementById("progressText");
+    const theadEl = document.getElementById("habitThead");
+    const tbodyEl = document.getElementById("habitTbody");
+    const dailyChart = document.getElementById("dailyChart");
+    const dayLabels = document.getElementById("dayLabels");
+    const dayPercentBody = document.getElementById("dayPercentBody");
+    const newHabitInput = document.getElementById("newHabit");
+    const addHabitBtn = document.getElementById("addHabitBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let state = {
+        habits: [...defaultHabits],
+        checks: {}
+    };
+
+    function loadState() {
+        const stored = localStorage.getItem(storageKey);
+        if (!stored) return;
+        try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed.habits) && typeof parsed.checks === "object") {
+                state = parsed;
+            }
+        } catch (e) {
+            console.warn("Konnte gespeicherte Daten nicht lesen", e);
+        }
+    }
+
+    function saveState() {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function buildTable() {
+        theadEl.innerHTML = "";
+        tbodyEl.innerHTML = "";
+        dailyChart.innerHTML = "";
+        dayLabels.innerHTML = "";
+        dayPercentBody.innerHTML = "";
+
+        monthTitle.textContent = `${monthNames[monthIndex]} ${year}`;
+        habitCountEl.textContent = state.habits.length;
+
+        const headRow1 = document.createElement("tr");
+        const headRow2 = document.createElement("tr");
+
+        const emptyTh1 = document.createElement("th");
+        emptyTh1.className = "habit-col";
+        emptyTh1.rowSpan = 2;
+        emptyTh1.textContent = "Meine Gewohnheiten";
+        headRow1.appendChild(emptyTh1);
+
+        for (let day = 1; day <= numDays; day++) {
+            const thDay = document.createElement("th");
+            thDay.textContent = day;
+            headRow1.appendChild(thDay);
+
+            const thWeekday = document.createElement("th");
+            const dateObj = new Date(year, monthIndex, day);
+            thWeekday.textContent = weekdayShort[dateObj.getDay()];
+            headRow2.appendChild(thWeekday);
+        }
+
+        theadEl.appendChild(headRow1);
+        theadEl.appendChild(headRow2);
+
+        state.habits.forEach((habit, habitIndex) => {
+            const tr = document.createElement("tr");
+
+            const habitTd = document.createElement("td");
+            habitTd.className = "habit-col";
+            habitTd.innerHTML = `<span class="habit-name">${habit}</span>`;
+            tr.appendChild(habitTd);
+
+            for (let day = 1; day <= numDays; day++) {
+                const td = document.createElement("td");
+                td.className = "checkbox-cell";
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.className = "habit-checkbox";
+                checkbox.dataset.day = String(day);
+                checkbox.dataset.habit = String(habitIndex);
+                const key = `${habitIndex}-${day}`;
+                checkbox.checked = Boolean(state.checks[key]);
+                checkbox.addEventListener("change", () => handleCheckChange(key, checkbox.checked));
+                td.appendChild(checkbox);
+                tr.appendChild(td);
+            }
+
+            tbodyEl.appendChild(tr);
+        });
+
+        for (let day = 1; day <= numDays; day++) {
+            const tr = document.createElement("tr");
+            const tdDay = document.createElement("td");
+            const tdPct = document.createElement("td");
+            tdDay.textContent = String(day);
+            tdPct.textContent = "0 %";
+            tdPct.dataset.day = String(day);
+            tr.appendChild(tdDay);
+            tr.appendChild(tdPct);
+            dayPercentBody.appendChild(tr);
+
+            const barWrapper = document.createElement("div");
+            barWrapper.className = "day-bar";
+            const barFill = document.createElement("div");
+            barFill.className = "day-bar-fill";
+            barFill.dataset.day = String(day);
+            barWrapper.appendChild(barFill);
+            dailyChart.appendChild(barWrapper);
+
+            const span = document.createElement("span");
+            if (day === 1 || day === numDays || day % 5 === 0) {
+                span.textContent = day;
+            } else {
+                span.textContent = "";
+            }
+            dayLabels.appendChild(span);
+        }
+
+        recalcProgress();
+    }
+
+    function handleCheckChange(key, checked) {
+        if (checked) {
+            state.checks[key] = true;
+        } else {
+            delete state.checks[key];
+        }
+        saveState();
+        recalcProgress();
+    }
+
+    function addHabit() {
+        const name = newHabitInput.value.trim();
+        if (!name) return;
+        state.habits.push(name);
+        newHabitInput.value = "";
+        saveState();
+        buildTable();
+    }
+
+    function resetMonth() {
+        if (!confirm("Alle Daten für diesen Monat löschen?")) return;
+        state = { habits: [...defaultHabits], checks: {} };
+        saveState();
+        buildTable();
+    }
+
+    function recalcProgress() {
+        const checkboxes = document.querySelectorAll(".habit-checkbox");
+        let completed = 0;
+        checkboxes.forEach(cb => {
+            if (cb.checked) completed++;
+        });
+
+        const totalPossible = state.habits.length * numDays;
+        const totalPct = totalPossible ? (completed / totalPossible) * 100 : 0;
+
+        completedCountEl.textContent = completed;
+        progressFill.style.width = totalPct.toFixed(1) + "%";
+        progressText.textContent = totalPct.toFixed(0) + " %";
+
+        for (let day = 1; day <= numDays; day++) {
+            const dayCheckboxes = document.querySelectorAll(`.habit-checkbox[data-day="${day}"]`);
+            let dayDone = 0;
+            dayCheckboxes.forEach(cb => cb.checked && dayDone++);
+            const pct = dayCheckboxes.length ? (dayDone / dayCheckboxes.length) * 100 : 0;
+
+            const pctCell = dayPercentBody.querySelector(`td[data-day="${day}"]`);
+            if (pctCell) pctCell.textContent = Math.round(pct) + " %";
+
+            const barFill = dailyChart.querySelector(`.day-bar-fill[data-day="${day}"]`);
+            if (barFill) {
+                barFill.style.height = pct + "%";
+                if (pct > 0) {
+                    barFill.classList.add("active");
+                } else {
+                    barFill.classList.remove("active");
+                }
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadState();
+        buildTable();
+        addHabitBtn.addEventListener("click", addHabit);
+        newHabitInput.addEventListener("keyup", e => {
+            if (e.key === "Enter") addHabit();
+        });
+        resetBtn.addEventListener("click", resetMonth);
+    });
+</script>
+</body>
+</html>
